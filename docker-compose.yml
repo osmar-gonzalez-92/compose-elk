@@ -1,0 +1,36 @@
+version: "3"
+
+services: 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
+    ports:
+      - "9200:9200"
+  kibana:  
+    image: docker.elastic.co/kibana/kibana-oss:6.2.2
+    links:
+      - "elasticsearch"
+    ports:
+      - "5601:5601"
+    environment:
+        - ELASTICSEARCH_USERNAME=elasticsearch
+        - ELASTICSEARCH_PASSWORD=elastic
+        - ELASTICSEARCH_HOST=elasticsearch
+        - ELASTICSEARCH_PORT=9200
+    depends_on: ['elasticsearch']        
+  keycloak-proxy:
+      image: jboss/keycloak-proxy:3.4.2.Final
+      environment: 
+        TARGET_URL: http://kibana:5601
+        HTTP_PORT: 8180
+        HTTPS_PORT: 8443
+        BASE_PATH: /
+        REALM_NAME: kibana
+        AUTH_SERVER_URL: http://keycloak:8080/auth
+        CLIENT_ID: kibana
+        ROLE_ALLOWED: user
+        SSL_REQUIRED: external
+      volumes: 
+        - $PWD/conf:/opt/jboss/conf
+      ports:
+        - 8180:8180
+      
